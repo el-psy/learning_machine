@@ -122,3 +122,9 @@ if __name__=='__main__':
 	storeTree(myTree,filename)
 	a_tree=grabTree(filename)
 	print(a_tree)
+	fr=open('lenses.txt')
+	lenses=[inst.strip().split('\t') for inst in fr.readlines()]
+	lensesLabels=['age','prescript','astigmatic','tearRate']
+	lensesTree=createTree(lenses,lensesLabels)
+	print(lensesLabels)
+	treePlotter.createPlot(lensesTree)
