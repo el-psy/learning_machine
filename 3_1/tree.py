@@ -1,6 +1,8 @@
 # _*_ coding:utf-8 _*_
 
 from math import log
+import operator
+import treePlotter
 
 def calcShannonEnt(dataSet):
 	numEntries=len(dataSet)
@@ -48,12 +50,75 @@ def chooseBestFeatureToSplit(dataSet):
 			bestFeature=i
 	return bestFeature
 
+def majorityCnt(classList):
+	classCount={}
+	for vote in classList:
+		if vote not in classCount.keys():classCount[vote]=0
+		classCount[vote]+=1
+	sortedClassCount=sorted(classCount.iteritems(),key=operator.itemgetter(1),reverse=True)
+	return sortedClassCount[0][0]
+
+def createTree(dataSet,labels):
+	classList=[example[-1] for example in dataSet]
+	if classList.count(classList[0])==len(classList):
+		return classList[0]
+	if len(dataSet[0])==1:
+		return majorityCnt(classList)
+	bestFeat=chooseBestFeatureToSplit(dataSet)
+	bestFeatLabel=labels[bestFeat]
+	myTree={bestFeatLabel:{}}
+	del(labels[bestFeat])
+	featValues=[example[bestFeat] for example in dataSet]
+	uniqueVals=set(featValues)
+	for value in uniqueVals:
+		subLabels=labels[:]
+		myTree[bestFeatLabel][value]=createTree(splitDataSet(dataSet,bestFeat,value),subLabels)
+	return myTree
+
+def classify(inputTree,featLabels,testVec):
+	firstStr=list(inputTree.keys())[0]
+	secondDict=inputTree[firstStr]
+	featIndex=featLabels.index(firstStr)
+	for key in secondDict.keys():
+		if testVec[featIndex]==key:
+			if type(secondDict[key]).__name__=='dict':
+				classLabel=classify(secondDict[key],featLabels,testVec)
+			else:
+				classLabel=secondDict[key]
+	return classLabel
+
+def storeTree(inputTree,filename):
+	import pickle
+	fw=open(filename,'wb')
+	pickle.dump(inputTree,fw)
+	fw.close()
+
+def grabTree(filename):
+	import pickle
+	fr=open(filename,'rb')
+	return pickle.load(fr)
+
 if __name__=='__main__':
 	myDat,labels=createDataSet()
 	print(myDat)
-	shannonEnt=calcShannonEnt(myDat)
-	print(shannonEnt)
-	retDataSet=splitDataSet(myDat,0,1)
-	print(retDataSet)
-	retDataSet=splitDataSet(myDat,0,0)
-	print(retDataSet)
+	#shannonEnt=calcShannonEnt(myDat)
+	#print(shannonEnt)
+	#retDataSet=splitDataSet(myDat,0,1)
+	#print(retDataSet)
+	#retDataSet=splitDataSet(myDat,0,0)
+	#print(retDataSet)
+	#bestFeature=chooseBestFeatureToSplit(myDat)
+	#print(bestFeature)
+	#myTree=createTree(myDat,labels)
+	#print(myTree)
+	myTree=treePlotter.retrieveTree(0)
+	print(myTree)
+	#print(labels)
+	#result=classify(myTree,labels,[1,0])
+	#print(result)
+	#result=classify(myTree,labels,[1,1])
+	#print(result)
+	filename='classifierStorage.txt'
+	storeTree(myTree,filename)
+	a_tree=grabTree(filename)
+	print(a_tree)
